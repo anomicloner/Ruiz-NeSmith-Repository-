@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basement Painting Timesheet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f2; padding: 24px 16px; color: #1a1a1a; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+  .card { background: #fff; border: 1px solid #e0e0d8; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+  .section-title { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .row:last-child { margin-bottom: 0; }
+  label { font-size: 13px; color: #666; min-width: 80px; }
+  input[type="time"], input[type="date"], input[type="text"], input[type="number"] {
+    flex: 1; padding: 7px 10px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 14px; background: #fafafa; color: #1a1a1a;
+  }
+  input[type="number"] { max-width: 80px; flex: none; }
+  .break-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .break-row input { flex: 1; }
+  .break-label { font-size: 13px; color: #666; min-width: 58px; }
+  .to-label { font-size: 13px; color: #999; }
+  .remove-btn { background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; padding: 0 4px; }
+  .remove-btn:hover { color: #555; }
+  .add-btn { font-size: 13px; color: #2563eb; background: none; border: none; cursor: pointer; padding: 0; margin-top: 6px; }
+  .add-btn:hover { text-decoration: underline; }
+  .no-breaks { font-size: 13px; color: #aaa; margin-bottom: 8px; }
+  .summary { background: #f0f4ff; border: 1px solid #c7d7ff; border-radius: 12px; padding: 20px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .metric-label { font-size: 12px; color: #555; margin-bottom: 4px; }
+  .metric-value { font-size: 20px; font-weight: 500; color: #1a1a1a; }
+  .divider { border: none; border-top: 1px solid #c7d7ff; margin: 12px 0; }
+  .pay { font-size: 32px; font-weight: 500; color: #16a34a; text-align: center; }
+  .pay-label { font-size: 13px; color: #555; text-align: center; margin-top: 4px; }
+  @media print {
+    body { background: white; padding: 16px; }
+    .add-btn, .remove-btn { display: none; }
+  }
+</style>
+</head>
+<body>
+<h1>Basement Painting Timesheet</h1>
+<p class="sub">Track hours and calculate pay</p>
+
+<div class="card">
+  <div class="section-title">Job info</div>
+  <div class="row">
+    <label>Worker</label>
+    <input type="text" id="worker" placeholder="Name" />
+  </div>
+  <div class="row">
+    <label>Date</label>
+    <input type="date" id="work-date" />
+  </div>
+  <div class="row">
+    <label>Rate / hr</label>
+    <input type="number" id="rate" value="5" min="1" step="0.5" />
+    <span style="font-size:14px;color:#666">$/hr</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Work hours</div>
+  <div class="row">
+    <label>Start time</label>
+    <input type="time" id="start" />
+  </div>
+  <div class="row">
+    <label>End time</label>
+    <input type="time" id="end" />
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Breaks</div>
+  <div id="breaks-list"><p class="no-breaks">No breaks added</p></div>
+  <button class="add-btn" onclick="addBreak()">+ Add break</button>
+</div>
+
+<div class="summary">
+  <div class="summary-grid">
+    <div>
+      <div class="metric-label">Total time</div>
+      <div class="metric-value" id="total-time">--</div>
+    </div>
+    <div>
+      <div class="metric-label">Break time</div>
+      <div class="metric-value" id="break-time">--</div>
+    </div>
+    <div>
+      <div class="metric-label">Hours worked</div>
+      <div class="metric-value" id="hours-worked">--</div>
+    </div>
+  </div>
+  <hr class="divider" />
+  <div class="pay" id="pay-amount">$--</div>
+  <div class="pay-label" id="pay-label">Enter times above to calculate</div>
+</div>
+
+<script>
+  var breaks = [];
+  document.getElementById('work-date').value = new Date().toISOString().split('T')[0];
+
+  function addBreak() {
+    breaks.push({ id: Date.now(), start: '', end: '' });
+    renderBreaks();
+  }
+
+  function removeBreak(id) {
+    breaks = breaks.filter(function(b){ return b.id !== id; });
+    renderBreaks();
+    calc();
+  }
+
+  function updateBreak(id, field, val) {
+    var b = breaks.find(function(x){ return x.id === id; });
+    if (b) { b[field] = val; calc(); }
+  }
+
+  function renderBreaks() {
+    var list = document.getElementById('breaks-list');
+    if (!breaks.length) {
+      list.innerHTML = '<p class="no-breaks">No breaks added</p>';
+      return;
+    }
+    list.innerHTML = breaks.map(function(b, i) {
+      return '<div class="break-row">' +
+        '<span class="break-label">Break ' + (i+1) + '</span>' +
+        '<input type="time" value="' + b.start + '" oninput="updateBreak(' + b.id + ',\'start\',this.value)" />' +
+        '<span class="to-label">to</span>' +
+        '<input type="time" value="' + b.end + '" oninput="updateBreak(' + b.id + ',\'end\',this.value)" />' +
+        '<button class="remove-btn" onclick="removeBreak(' + b.id + ')">&#10005;</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function toMins(t) {
+    if (!t) return null;
+    var parts = t.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  }
+
+  function fmtMins(m) {
+    if (m < 0) return '--';
+    var h = Math.floor(m / 60), mn = m % 60;
+    if (h === 0) return mn + 'm';
+    if (mn === 0) return h + 'h';
+    return h + 'h ' + mn + 'm';
+  }
+
+  function calc() {
+    var s = toMins(document.getElementById('start').value);
+    var e = toMins(document.getElementById('end').value);
+    var rate = parseFloat(document.getElementById('rate').value) || 5;
+
+    if (s === null || e === null || e <= s) {
+      document.getElementById('total-time').textContent = '--';
+      document.getElementById('break-time').textContent = '--';
+      document.getElementById('hours-worked').textContent = '--';
+      document.getElementById('pay-amount').textContent = '$--';
+      document.getElementById('pay-label').textContent = 'Enter start and end times above';
+      return;
+    }
+
+    var total = e - s;
+    var bMins = 0;
+    breaks.forEach(function(b) {
+      var bs = toMins(b.start), be = toMins(b.end);
+      if (bs !== null && be !== null && be > bs) bMins += (be - bs);
+    });
+
+    var worked = Math.max(0, total - bMins);
+    var hrs = worked / 60;
+    var pay = hrs * rate;
+    var worker = document.getElementById('worker').value.trim();
+
+    document.getElementById('total-time').textContent = fmtMins(total);
+    document.getElementById('break-time').textContent = bMins > 0 ? fmtMins(bMins) : '0m';
+    document.getElementById('hours-worked').textContent = hrs % 1 === 0 ? hrs + 'h' : hrs.toFixed(2) + 'h';
+    document.getElementById('pay-amount').textContent = '$' + pay.toFixed(2);
+    document.getElementById('pay-label').textContent = worker ? 'Total owed to ' + worker : 'Total owed';
+  }
+
+  ['start','end','rate','worker'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+  });
+</script>
+</body>
+</html>
