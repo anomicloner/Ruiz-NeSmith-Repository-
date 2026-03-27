@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dad's Timesheet View</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #2563EB; --yellow: #FBBF24; --green: #22C55E; --red: #EF4444;
+    --bg: #F0F4FF; --card: #fff; --text: #1E1B18; --muted: #6B7280; --border: #E5E7EB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); min-height: 100vh; padding: 24px 16px 48px; }
+  .page { max-width: 680px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 { font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--blue); text-shadow: 3px 3px 0 var(--yellow); }
+  .header p { color: var(--muted); font-weight: 600; margin-top: 4px; }
+
+  .totals-bar {
+    background: var(--blue); color: white; border-radius: 20px; padding: 20px 24px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;
+  }
+  .totals-bar .t-item label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.75; display: block; margin-bottom: 3px; }
+  .totals-bar .t-item .val { font-family: 'Fredoka One', cursive; font-size: 1.6rem; line-height: 1; }
+
+  .refresh-btn {
+    width: 100%; background: var(--blue); color: white; border: none; border-radius: 14px;
+    padding: 12px; font-family: 'Fredoka One', cursive; font-size: 1.1rem; cursor: pointer;
+    margin-bottom: 20px; transition: background 0.2s;
+  }
+  .refresh-btn:hover { background: #1D4ED8; }
+
+  .entry-card {
+    background: var(--card); border-radius: 18px; padding: 20px; margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 2px solid var(--border);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .entry-name { font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: var(--blue); }
+  .entry-date { font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-top: 2px; }
+  .entry-pay { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: var(--green); }
+
+  .entry-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .entry-stat label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); display: block; margin-bottom: 2px; }
+  .entry-stat .sv { font-weight: 800; font-size: 0.97rem; color: var(--text); }
+
+  .breaks-row { background: #FFF8F0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.88rem; font-weight: 700; color: var(--muted); }
+  .notes-row { background: #F0FDF4; border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; font-weight: 600; color: var(--text); }
+  .notes-row strong { color: var(--green); }
+
+  .delete-btn {
+    background: none; border: 2px solid var(--red); color: var(--red); border-radius: 10px;
+    padding: 6px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem;
+    cursor: pointer; margin-top: 10px; float: right; transition: background 0.15s, color 0.15s;
+  }
+  .delete-btn:hover { background: var(--red); color: white; }
+
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty .big { font-size: 3rem; margin-bottom: 10px; }
+  .empty p { font-weight: 700; font-size: 1rem; }
+
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-weight: 700; font-size: 1.1rem; }
+
+  @media (max-width: 480px) {
+    .totals-bar, .entry-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>👨‍👦 Dad's View</h1>
+    <p>Basement Painter Timesheets</p>
+  </div>
+
+  <div class="totals-bar">
+    <div class="t-item"><label>Total Sessions</label><div class="val" id="total-sessions">—</div></div>
+    <div class="t-item"><label>Total Hours</label><div class="val" id="total-hours">—</div></div>
+    <div class="t-item"><label>Total Owed</label><div class="val" id="total-owed">—</div></div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadTimesheets()">🔄 Refresh</button>
+
+  <div id="entries"><div class="loading">Loading timesheets...</div></div>
+</div>
+
+<script>
+  const BIN_ID = '69c5d8e5aa77b81da92383b8';
+  const API_KEY = '$2a$10$gzYoisEruOX8cy/Tpl0pducif0NcRI0ldg2/RoB/nK5s1FnrgxHwe';
+
+  function fmt12(t) {
+    if (!t) return '—';
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  function minsToLabel(m) {
+    return `${Math.floor(m/60)}h ${m%60}m`;
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    const [y, mo, day] = d.split('-');
+    return new Date(y, mo-1, day).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  }
+
+  async function deleteEntry(id, allEntries) {
+    if (!confirm('Remove this timesheet entry?')) return;
+    const updated = allEntries.filter(e => e.id !== id);
+    try {
+      await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+        body: JSON.stringify({ timesheets: updated })
+      });
+      loadTimesheets();
+    } catch(e) { alert('Could not delete. Try again.'); }
+  }
+
+  async function loadTimesheets() {
+    document.getElementById('entries').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      const data = await res.json();
+      const timesheets = (data.record.timesheets || []).slice().reverse();
+
+      // Totals
+      const totalMins = timesheets.reduce((s, e) => s + (e.workedMins || 0), 0);
+      const totalPay = timesheets.reduce((s, e) => s + parseFloat(e.pay || 0), 0);
+      document.getElementById('total-sessions').textContent = timesheets.length;
+      document.getElementById('total-hours').textContent = minsToLabel(totalMins);
+      document.getElementById('total-owed').textContent = '$' + totalPay.toFixed(2);
+
+      if (timesheets.length === 0) {
+        document.getElementById('entries').innerHTML = `
+          <div class="empty"><div class="big">🎨</div><p>No timesheets submitted yet.<br>Tell your son to get painting!</p></div>`;
+        return;
+      }
+
+      const allEntries = (data.record.timesheets || []);
+      document.getElementById('entries').innerHTML = timesheets.map(e => {
+        const breaksHtml = e.breaks && e.breaks.length > 0
+          ? `<div class="breaks-row">☕ Breaks: ${e.breaks.map(b => `${fmt12(b.start)} – ${fmt12(b.end)}`).join(' &nbsp;|&nbsp; ')}</div>`
+          : '';
+        const notesHtml = e.notes ? `<div class="notes-row"><strong>📝 Notes:</strong> ${e.notes}</div>` : '';
+        return `
+          <div class="entry-card">
+            <div class="entry-header">
+              <div><div class="entry-name">🖌️ ${e.name}</div><div class="entry-date">${fmtDate(e.date)}</div></div>
+              <div class="entry-pay">$${e.pay}</div>
+            </div>
+            <div class="entry-grid">
+              <div class="entry-stat"><label>Start</label><div class="sv">${fmt12(e.start)}</div></div>
+              <div class="entry-stat"><label>End</label><div class="sv">${fmt12(e.end)}</div></div>
+              <div class="entry-stat"><label>Worked</label><div class="sv">${minsToLabel(e.workedMins)}</div></div>
+            </div>
+            ${breaksHtml}
+            ${notesHtml}
+            <button class="delete-btn" onclick="deleteEntry(${e.id}, ${JSON.stringify(allEntries).replace(/"/g, '&quot;')})">🗑 Remove</button>
+            <div style="clear:both"></div>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      document.getElementById('entries').innerHTML = '<div class="loading">❌ Could not load timesheets. Check your connection.</div>';
+    }
+  }
+
+  loadTimesheets();
+</script>
+</body>
+</html>

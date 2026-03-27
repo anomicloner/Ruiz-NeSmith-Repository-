@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basement Painter Timesheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paint-blue: #2563EB;
+    --paint-yellow: #FBBF24;
+    --paint-red: #EF4444;
+    --paint-green: #22C55E;
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --text: #1E1B18;
+    --muted: #78716C;
+    --border: #E7E5E4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); min-height: 100vh; padding: 24px 16px 40px; }
+  body::before {
+    content: ''; position: fixed; top: -60px; right: -60px; width: 200px; height: 200px;
+    background: var(--paint-yellow); border-radius: 60% 40% 70% 50% / 50% 60% 40% 70%; opacity: 0.25; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; bottom: -40px; left: -40px; width: 160px; height: 160px;
+    background: var(--paint-blue); border-radius: 40% 70% 50% 60% / 60% 40% 70% 50%; opacity: 0.18; z-index: 0;
+  }
+  .page { max-width: 620px; margin: 0 auto; position: relative; z-index: 1; }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header .emoji-row { font-size: 2.4rem; margin-bottom: 6px; animation: wiggle 2.5s ease-in-out infinite; }
+  @keyframes wiggle { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  .header h1 { font-family: 'Fredoka One', cursive; font-size: 2.2rem; color: var(--paint-blue); text-shadow: 3px 3px 0 var(--paint-yellow); line-height: 1.1; }
+  .header p { color: var(--muted); font-weight: 600; font-size: 0.95rem; margin-top: 6px; }
+  .card { background: var(--card); border-radius: 20px; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border: 2px solid var(--border); }
+  .card-title { font-family: 'Fredoka One', cursive; font-size: 1.15rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-blue { background: var(--paint-blue); } .dot-red { background: var(--paint-red); } .dot-green { background: var(--paint-green); }
+  .info-row, .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field label { display: block; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 5px; }
+  .field input[type="text"], .field input[type="date"], .field input[type="time"] {
+    width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 0.97rem; font-weight: 700; color: var(--text);
+    background: #FAFAF9; outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--paint-blue); background: #fff; }
+  .break-list { display: flex; flex-direction: column; gap: 10px; }
+  .break-item { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; background: #FFF8F0; padding: 12px; border-radius: 12px; border: 2px dashed var(--border); }
+  .remove-btn { background: var(--paint-red); color: white; border: none; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; align-self: flex-end; }
+  .remove-btn:hover { background: #DC2626; transform: scale(1.1); }
+  .add-btn { background: none; border: 2px dashed var(--paint-red); color: var(--paint-red); border-radius: 12px; padding: 9px 16px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.92rem; cursor: pointer; margin-top: 10px; width: 100%; transition: background 0.15s, color 0.15s; }
+  .add-btn:hover { background: var(--paint-red); color: white; }
+  .summary-card { background: var(--paint-blue); border-radius: 20px; padding: 24px; margin-bottom: 16px; color: white; position: relative; overflow: hidden; }
+  .summary-card::before { content: '🎨'; position: absolute; font-size: 6rem; right: -10px; top: -10px; opacity: 0.15; }
+  .summary-card .card-title { color: white; margin-bottom: 18px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .summary-item label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.75; margin-bottom: 3px; }
+  .summary-item .value { font-family: 'Fredoka One', cursive; font-size: 1.6rem; line-height: 1; }
+  .pay-big { background: var(--paint-yellow); color: var(--text); border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .pay-big .pay-label { font-weight: 800; font-size: 0.95rem; }
+  .pay-big .pay-amount { font-family: 'Fredoka One', cursive; font-size: 2.2rem; color: var(--paint-blue); }
+  .notes-area { width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text); background: #FAFAF9; outline: none; resize: vertical; min-height: 80px; transition: border-color 0.2s; }
+  .notes-area:focus { border-color: var(--paint-blue); background: #fff; }
+  .submit-btn { width: 100%; background: var(--paint-green); color: white; border: none; border-radius: 16px; padding: 15px; font-family: 'Fredoka One', cursive; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 0 #16A34A; transition: transform 0.1s, box-shadow 0.1s; }
+  .submit-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #16A34A; }
+  .submit-btn:hover { background: #16A34A; }
+  .submit-btn:disabled { background: #A3A3A3; box-shadow: 0 4px 0 #737373; cursor: not-allowed; }
+  .toast { display: none; text-align: center; margin-top: 14px; background: var(--paint-green); color: white; border-radius: 12px; padding: 12px; font-weight: 800; font-size: 1rem; }
+  .toast.error { background: var(--paint-red); }
+  .toast.show { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .rate-note { text-align: center; font-size: 0.82rem; color: var(--muted); font-weight: 700; margin-top: 12px; }
+  @media (max-width: 480px) {
+    .info-row, .time-row, .summary-grid { grid-template-columns: 1fr; }
+    .break-item { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="emoji-row">🖌️🪣🎨</div>
+    <h1>Basement Painter<br>Timesheet</h1>
+    <p>Rate: $5.00 per hour</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot dot-blue"></span> Worker Info</div>
+    <div class="info-row">
+      <div class="field"><label>Name</label><input type="text" id="worker-name" placeholder="Your name"></div>
+      <div class="field"><label>Date</label><input type="date" id="work-date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot dot-blue"></span> Work Hours</div>
+    <div class="time-row">
+      <div class="field"><label>Start Time</label><input type="time" id="start-time" oninput="calculate()"></div>
+      <div class="field"><label>End Time</label><input type="time" id="end-time" oninput="calculate()"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot dot-red"></span> Breaks</div>
+    <div class="break-list" id="break-list"></div>
+    <button class="add-btn" onclick="addBreak()">+ Add a Break</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot dot-green"></span> Work Notes</div>
+    <textarea class="notes-area" id="notes" placeholder="What did you paint today? Any supplies needed?"></textarea>
+  </div>
+
+  <div class="summary-card">
+    <div class="card-title"><span class="dot" style="background:#FBBF24"></span> Pay Summary</div>
+    <div class="summary-grid">
+      <div class="summary-item"><label>Total Time</label><div class="value" id="total-time">0h 0m</div></div>
+      <div class="summary-item"><label>Break Time</label><div class="value" id="break-time">0h 0m</div></div>
+      <div class="summary-item"><label>Hours Worked</label><div class="value" id="hours-worked">0h 0m</div></div>
+      <div class="summary-item"><label>Rate</label><div class="value">$5.00/hr</div></div>
+    </div>
+    <div class="pay-big">
+      <span class="pay-label">💰 Total Pay</span>
+      <span class="pay-amount" id="total-pay">$0.00</span>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submit-btn" onclick="submitTimesheet()">✅ Submit to Dad</button>
+  <div class="toast" id="toast"></div>
+  <p class="rate-note">Keep up the great work, painter! 🌟</p>
+</div>
+
+<script>
+  const BIN_ID = '69c5d8e5aa77b81da92383b8';
+  const API_KEY = '$2a$10$gzYoisEruOX8cy/Tpl0pducif0NcRI0ldg2/RoB/nK5s1FnrgxHwe';
+
+  document.getElementById('work-date').valueAsDate = new Date();
+
+  let breakCount = 0;
+
+  function addBreak() {
+    breakCount++;
+    const id = breakCount;
+    const list = document.getElementById('break-list');
+    const div = document.createElement('div');
+    div.className = 'break-item';
+    div.id = 'break-' + id;
+    div.innerHTML = `
+      <div class="field"><label>Break Start</label><input type="time" id="bs-${id}" oninput="calculate()"></div>
+      <div class="field"><label>Break End</label><input type="time" id="be-${id}" oninput="calculate()"></div>
+      <button class="remove-btn" onclick="removeBreak(${id})">✕</button>`;
+    list.appendChild(div);
+    calculate();
+  }
+
+  function removeBreak(id) {
+    document.getElementById('break-' + id).remove();
+    calculate();
+  }
+
+  function timeToMins(t) {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function minsToLabel(m) {
+    if (m < 0) m = 0;
+    return `${Math.floor(m/60)}h ${m%60}m`;
+  }
+
+  function calculate() {
+    const start = timeToMins(document.getElementById('start-time').value);
+    const end = timeToMins(document.getElementById('end-time').value);
+    let totalMins = (start !== null && end !== null && end > start) ? end - start : 0;
+    let breakMins = 0;
+    document.querySelectorAll('[id^="bs-"]').forEach(el => {
+      const bId = el.id.replace('bs-', '');
+      const bs = timeToMins(el.value);
+      const be = timeToMins(document.getElementById('be-' + bId).value);
+      if (bs !== null && be !== null && be > bs) breakMins += (be - bs);
+    });
+    const workedMins = Math.max(0, totalMins - breakMins);
+    const pay = (workedMins / 60) * 5;
+    document.getElementById('total-time').textContent = minsToLabel(totalMins);
+    document.getElementById('break-time').textContent = minsToLabel(breakMins);
+    document.getElementById('hours-worked').textContent = minsToLabel(workedMins);
+    document.getElementById('total-pay').textContent = '$' + pay.toFixed(2);
+    return { totalMins, breakMins, workedMins, pay };
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 4000);
+  }
+
+  async function submitTimesheet() {
+    const name = document.getElementById('worker-name').value.trim();
+    const date = document.getElementById('work-date').value;
+    const start = document.getElementById('start-time').value;
+    const end = document.getElementById('end-time').value;
+    if (!name) { showToast('Please enter your name!', true); return; }
+    if (!start || !end) { showToast('Please enter start and end times!', true); return; }
+
+    const { workedMins, pay } = calculate();
+    const breaks = [];
+    document.querySelectorAll('[id^="bs-"]').forEach(el => {
+      const bId = el.id.replace('bs-', '');
+      const bs = el.value;
+      const be = document.getElementById('be-' + bId).value;
+      if (bs && be) breaks.push({ start: bs, end: be });
+    });
+
+    const entry = {
+      id: Date.now(),
+      name, date, start, end, breaks,
+      notes: document.getElementById('notes').value,
+      workedMins,
+      pay: pay.toFixed(2),
+      submittedAt: new Date().toISOString()
+    };
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+      // Read current data
+      const getRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      const getData = await getRes.json();
+      const existing = getData.record.timesheets || [];
+      existing.push(entry);
+
+      // Write updated data
+      const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+        body: JSON.stringify({ timesheets: existing })
+      });
+
+      if (putRes.ok) {
+        showToast('✅ Timesheet submitted! Dad can see it now.');
+        btn.textContent = '✅ Submitted!';
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (e) {
+      showToast('❌ Something went wrong. Try again!', true);
+      btn.disabled = false;
+      btn.textContent = '✅ Submit to Dad';
+    }
+  }
+
+  calculate();
+</script>
+</body>
+</html>
