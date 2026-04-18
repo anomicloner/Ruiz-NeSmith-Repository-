@@ -1,0 +1,207 @@
+```react
+import React, { useState } from 'react';
+import { CheckCircle2, XCircle, Info, ExternalLink, Car, Users, Shield, ArrowRight } from 'lucide-react';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const pacificaFeatures = [
+    { name: 'Power Sliding Doors & Liftgate', included: true, detail: 'Push-button open/close from the driver seat or key fob.' },
+    { name: 'Stow \'n Go Seating', included: true, detail: 'Second row folds completely flat into the floor in seconds.' },
+    { name: 'Cold Weather Comfort', included: true, detail: 'Heated front seats and tri-zone automatic climate control.' },
+    { name: 'Leather-Trimmed Seats', included: true, detail: 'Easier to wipe down spills from the kids.' },
+    { name: 'Mileage Wear', included: false, detail: '86,000 miles means closer to wear-and-tear repairs.' },
+  ];
+
+  const sedonaFeatures = [
+    { name: 'Extremely Low Mileage', included: true, detail: 'Only 32,000 miles. Engine and transmission are practically new.' },
+    { name: 'Newer Model Year', included: true, detail: '2020 model provides modern structural safety.' },
+    { name: 'Manual Sliding Doors', included: false, detail: 'Requires physical pulling to open/close doors and liftgate.' },
+    { name: 'Standard Seating', included: false, detail: 'Second-row seats must be physically removed to maximize cargo.' },
+    { name: 'Basic Interior', included: false, detail: 'Cloth seats and basic air conditioning.' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        
+        {/* Header Section */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">Which Van Fits Our Family Best?</h1>
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            A side-by-side look at the two best options for transporting our family of seven, balancing daily convenience with long-term reliability.
+          </p>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-slate-200 p-1 rounded-xl inline-flex">
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Side-by-Side Comparison
+            </button>
+            <button 
+              onClick={() => setActiveTab('daily')}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'daily' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Daily Impact for Liz
+            </button>
+          </div>
+        </div>
+
+        {/* Overview Tab Content */}
+        {activeTab === 'overview' && (
+          <div className="grid md:grid-cols-2 gap-8">
+            
+            {/* Pacifica Card */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden flex flex-col">
+              <div className="bg-blue-600 p-6 text-white text-center">
+                <Car className="w-12 h-12 mx-auto mb-2 opacity-90" />
+                <h2 className="text-2xl font-bold">2019 Chrysler Pacifica</h2>
+                <p className="text-blue-100 font-medium">Touring L Trim</p>
+              </div>
+              
+              <div className="p-6 flex-grow flex flex-col">
+                <div className="flex justify-between items-end mb-6 pb-6 border-b border-slate-100">
+                  <div>
+                    <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Estimated Total</p>
+                    <p className="text-4xl font-bold text-slate-900">~$17,589</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Mileage</p>
+                    <p className="text-2xl font-bold text-slate-700">86,000</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 flex-grow">
+                  {pacificaFeatures.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      {feature.included ? (
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-rose-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <p className="font-semibold text-slate-800">{feature.name}</p>
+                        <p className="text-sm text-slate-600">{feature.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <a 
+                    href="https://www.enterprisecarsales.com/list/buy-a-car-chrysler-pacifica/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-blue-50 text-blue-700 hover:bg-blue-100 py-3 rounded-xl font-semibold transition-colors"
+                  >
+                    View Pacifica Inventory <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Sedona Card */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden flex flex-col">
+              <div className="bg-slate-800 p-6 text-white text-center">
+                <Shield className="w-12 h-12 mx-auto mb-2 opacity-90" />
+                <h2 className="text-2xl font-bold">2020 Kia Sedona</h2>
+                <p className="text-slate-300 font-medium">L (Base Trim)</p>
+              </div>
+              
+              <div className="p-6 flex-grow flex flex-col">
+                <div className="flex justify-between items-end mb-6 pb-6 border-b border-slate-100">
+                  <div>
+                    <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Estimated Total</p>
+                    <p className="text-4xl font-bold text-slate-900">~$20,679</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Mileage</p>
+                    <p className="text-2xl font-bold text-emerald-600">32,000</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 flex-grow">
+                  {sedonaFeatures.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      {feature.included ? (
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-rose-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <p className="font-semibold text-slate-800">{feature.name}</p>
+                        <p className="text-sm text-slate-600">{feature.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <a 
+                    href="https://www.enterprisecarsales.com/list/buy-a-car-kia-sedona/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-slate-100 text-slate-700 hover:bg-slate-200 py-3 rounded-xl font-semibold transition-colors"
+                  >
+                    View Sedona Inventory <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* Daily Impact Tab Content */}
+        {activeTab === 'daily' && (
+          <div className="bg-white rounded-2xl shadow-md p-8 border border-slate-100">
+            <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <Users className="text-blue-600 w-8 h-8" /> 
+              The Daily Reality Check
+            </h3>
+            
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="bg-blue-50 p-4 rounded-xl flex-shrink-0">
+                  <Info className="w-8 h-8 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Scenario: School Pickup in the Winter</h4>
+                  <p className="text-slate-600 leading-relaxed">
+                    <strong>With the Pacifica:</strong> You press a button from the driver's seat. Both sliding doors open automatically. The kids pile in, and the doors close with another button press. You never have to step into the snow. <br/><br/>
+                    <strong>With the Sedona:</strong> You have to put the car in park, unbuckle, get out in the cold, manually pull the heavy sliding doors open for the kids, make sure they are clear, and forcefully slide them shut before getting back into the driver's seat.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="bg-emerald-50 p-4 rounded-xl flex-shrink-0">
+                  <Shield className="w-8 h-8 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Scenario: The Next 5 Years of Maintenance</h4>
+                  <p className="text-slate-600 leading-relaxed">
+                    <strong>With the Pacifica:</strong> Because it has 86,000 miles, we are much closer to needing new brake pads, fluid flushes, and suspension checks. It saves us $3,000 today, but requires us to be more vigilant about trips to the mechanic. <br/><br/>
+                    <strong>With the Sedona:</strong> At only 32,000 miles, this van is mechanically in its infancy. It costs more today, but it is highly unlikely to need anything more than basic oil changes and tire rotations for the next few years, offering absolute peace of mind.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-10 p-6 bg-slate-800 rounded-xl text-white text-center">
+              <p className="text-lg font-medium mb-2">The Ultimate Question for Liz:</p>
+              <p className="text-slate-300">Would you rather have the daily physical ease of power doors (Pacifica), or the absolute mental peace of mind that comes with a practically brand-new engine (Sedona)?</p>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+```
